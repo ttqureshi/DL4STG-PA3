@@ -8,10 +8,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SECTIONS_DIR = REPO_ROOT / "report" / "sections"
 OUT_PATH = REPO_ROOT / "report" / "report.md"
 
-GITHUB_PLACEHOLDER = (
-    "<!-- GITHUB_REPO_URL: replace with your public repository URL before submission -->\n"
-    "<!-- Example: https://github.com/username/DL4STG-PA3 -->\n\n"
-)
+GITHUB_REPO_URL = "https://github.com/ttqureshi/DL4STG-PA3"
 
 SECTION_ORDER = (
     "q1.md",
