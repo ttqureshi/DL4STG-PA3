@@ -1,0 +1,32 @@
+# Raw LargeST data (download separately)
+data/raw/**
+!data/raw/.gitkeep
+data/ca/**
+data/sd/**
+
+# Processed artifacts (regenerable)
+data/processed/**/*
+!data/processed/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.kaggle/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Assignment PDFs should not be committed
+*.pdf
+
+# Training outputs (regenerable)
+outputs/
+
+# Checkpoints
+*.pt
