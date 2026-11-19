@@ -1,0 +1,13 @@
+model_type: temporal_only
+run_name: temporal_only
+processed_dir: data/processed
+output_dir: outputs
+seed: 42
+device: cpu
+input_len: 8
+horizon: 4
+hidden_dim: 32
+batch_size: 32
+epochs: 20
+lr: 0.001
+loss: mae

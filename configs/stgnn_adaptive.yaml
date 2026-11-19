@@ -1,0 +1,16 @@
+model_type: stgnn
+adjacency_mode: adaptive
+run_name: stgnn_adaptive
+processed_dir: data/processed
+output_dir: outputs
+seed: 42
+device: cpu
+input_len: 8
+horizon: 4
+hidden_dim: 32
+embed_dim: 10
+top_k: 20
+batch_size: 32
+epochs: 20
+lr: 0.001
+loss: mae
