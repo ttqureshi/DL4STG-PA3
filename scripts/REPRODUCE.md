@@ -2,7 +2,7 @@
 
 ## Hardware
 
-<!-- HARDWARE: e.g. CPU model, RAM, GPU if used; fill before submission -->
+Windows 11, Intel64 Family 6 Model 154 Stepping 4, GenuineIntel
 
 Runs in this repository default to `device: cpu` in all YAML configs. GPU training is supported by setting `device: cuda` in the config files.
 

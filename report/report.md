@@ -294,6 +294,8 @@ cd src/q1_q2 && python run_all.py
 
 Reference: [LargeST](https://github.com/liuxu77/LargeST) (NeurIPS 2023 DB Track). San Diego (SD) is **District 11** in `ca_meta.csv` (**716** sensors). Sensor order follows `sd_meta.csv` / `ID2` indexing into the CA adjacency matrix.
 
+**Data note (this run):** `ca_meta.csv` and the SD road-network adjacency (\(716\times716\)) come from LargeST. Each uncompressed `ca_his_raw_*.h5` is \(\approx 7.2\,\mathrm{GiB}\); local **C:**/**Google Drive** free space was below that, so flow was produced with `python -m src.data.run_q3 --synthetic-flow` (daily/weekly traffic patterns, real sensor IDs and graph). Re-run without `--synthetic-flow` after placing valid HDF5 files in `data/raw/`. See `data/processed/synthetic_note.json`.
+
 ---
 
 ## Q3(a) — Data extraction and resampling
@@ -577,7 +579,11 @@ Each training run writes `results.json` with `test_mae`, `test_rmse`, `train_sec
 
 | Model | Adjacency | Test MAE | Test RMSE | Train time (s) | Seed |
 |-------|-----------|----------|-----------|----------------|------|
-| *(run `evaluate_all`)* | | | | | |
+| `stgnn_adaptive` | adaptive | 4.1011 | 5.1350 | 1763.4 | 42 |
+| `stgnn_hybrid` | hybrid | 4.5876 | 5.8014 | 831.5 | 42 |
+| `temporal_only` | — | 5.3083 | 6.6770 | 1247.3 | 42 |
+| `stgnn_fixed` | fixed | 8.2537 | 10.8794 | 1501.9 | 42 |
+
 
 **Interpretation prompts**
 

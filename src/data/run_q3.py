@@ -8,6 +8,7 @@ from src.data.download import missing_files, print_manual_instructions, verify_r
 from src.data.graph_sd import run_graph_construction
 from src.data.paths import ensure_dirs
 from src.data.preprocess_sd import run_preprocessing
+from src.data.synthetic_flow import run_synthetic_preprocessing
 from src.data.visualize_q3 import run_all_plots
 
 
@@ -18,19 +19,28 @@ def main() -> int:
         action="store_true",
         help="Run even if verify fails (not recommended)",
     )
+    parser.add_argument(
+        "--synthetic-flow",
+        action="store_true",
+        help="Use synthetic flow (real SD meta/adjacency) when HDF5 is unavailable",
+    )
     args = parser.parse_args()
     ensure_dirs()
 
-    if missing_files():
-        print_manual_instructions()
-        if not args.skip_download_check:
+    if not args.synthetic_flow:
+        if missing_files():
+            print_manual_instructions()
+            if not args.skip_download_check:
+                return 1
+
+        if not verify_raw_data() and not args.skip_download_check:
             return 1
 
-    if not verify_raw_data() and not args.skip_download_check:
-        return 1
-
     print("Preprocessing San Diego flow (2020–2021, 15-min)...")
-    meta = run_preprocessing()
+    if args.synthetic_flow:
+        meta = run_synthetic_preprocessing()
+    else:
+        meta = run_preprocessing()
     print(f"  Saved flow tensor shape: {meta['flow_shape']}")
 
     print("Building adjacency submatrix...")

@@ -1,8 +1,9 @@
 """Canonical paths for LargeST San Diego PA3 pipeline."""
+import os
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DATA_RAW = REPO_ROOT / "data" / "raw"
+DATA_RAW = Path(os.environ.get("DL4STG_RAW_DIR", REPO_ROOT / "data" / "raw"))
 DATA_PROCESSED = REPO_ROOT / "data" / "processed"
 FIGURES_DIR = REPO_ROOT / "report" / "figures" / "q3"
 REPORT_SECTION = REPO_ROOT / "report" / "sections" / "q3.md"

@@ -27,9 +27,12 @@ class AdjacencyStats:
 def extract_sd_adjacency(sd_meta=None) -> np.ndarray:
     if sd_meta is None:
         sd_meta = load_sd_metadata()
-    id2 = sd_meta["ID2"].values.astype(int).tolist()
     ca_adj = np.load(CA_RN_ADJ)
-    sd_adj = ca_adj[np.ix_(id2, id2)].astype(np.float64)
+    if ca_adj.shape == (SD_NUM_SENSORS, SD_NUM_SENSORS):
+        sd_adj = ca_adj.astype(np.float64)
+    else:
+        id2 = sd_meta["ID2"].values.astype(int).tolist()
+        sd_adj = ca_adj[np.ix_(id2, id2)].astype(np.float64)
     if sd_adj.shape != (SD_NUM_SENSORS, SD_NUM_SENSORS):
         raise ValueError(f"Expected adjacency {SD_NUM_SENSORS}×{SD_NUM_SENSORS}, got {sd_adj.shape}")
     return sd_adj

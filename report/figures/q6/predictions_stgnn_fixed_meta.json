@@ -1,0 +1,11 @@
+{
+  "run_name": "stgnn_fixed",
+  "config": "configs\\stgnn_fixed.yaml",
+  "sensor_indices": [
+    0,
+    100,
+    200
+  ],
+  "num_points": 672,
+  "figure": "report\\figures\\q6\\predictions_stgnn_fixed_three_sensors.png"
+}

@@ -25,7 +25,7 @@ def main() -> None:
     parts = [
         "# DL4STG — Programming Assignment 3\n",
         "\n",
-        GITHUB_PLACEHOLDER,
+        f"**Source code:** [{GITHUB_REPO_URL}]({GITHUB_REPO_URL})\n\n",
         "---\n\n",
     ]
     for name in SECTION_ORDER:
