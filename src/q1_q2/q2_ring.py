@@ -56,10 +56,11 @@ def isolated_spike() -> Tuple[np.ndarray, np.ndarray]:
 def fit_isolated_spike_ab() -> Tuple[float, float, Dict[str, np.ndarray]]:
     """
     Minimise SSE for symmetric layer on isolated spike at sensor 20.
-    Analytic minimum: a=0, b=1.
+    True one-step shift x_i(1)=x_{i+1}(0) gives targets (1,0,0) at sensors 19–21;
+    predictions (b,a,b) => SSE = a^2 + (b-1)^2 + b^2, minimum a=0, b=0.5.
     """
     x0, x1 = isolated_spike()
-    a, b = 0.0, 1.0
+    a, b = 0.0, 0.5
     x_hat = layer_symmetric(x0, a, b)
     return a, b, {"x0": x0, "y_true": x1, "y_hat": x_hat}
 
@@ -121,7 +122,8 @@ def save_heatmaps(out_dir: Path, steps: int = 20) -> Path:
     i = np.arange(N_RING, dtype=float)
     x0 = np.exp(-((i - 20.0) ** 2) / 8.0)
     true_seq = rollout_true(x0, steps, forward=False)
-    model_seq = rollout_symmetric(x0, steps, a=0.0, b=1.0)
+    a_fit, b_fit, _ = fit_isolated_spike_ab()
+    model_seq = rollout_symmetric(x0, steps, a=a_fit, b=b_fit)
 
     fig, axes = plt.subplots(1, 2, figsize=(10, 4), sharey=True)
     vmax = float(max(true_seq.max(), model_seq.max()))
@@ -130,7 +132,7 @@ def save_heatmaps(out_dir: Path, steps: int = 20) -> Path:
     for ax, data, title in zip(
         axes,
         [true_seq, model_seq],
-        ["True backward motion", "Symmetric layer (a=0, b=1)"],
+        ["True backward motion", f"Symmetric layer (a={a_fit:g}, b={b_fit:g})"],
     ):
         im = ax.imshow(data, aspect="auto", origin="lower", vmin=vmin, vmax=vmax, cmap="viridis")
         ax.set_title(title)

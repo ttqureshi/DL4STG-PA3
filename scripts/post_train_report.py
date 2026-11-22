@@ -65,7 +65,7 @@ def patch_q7_metrics() -> None:
         return
     data = json.loads(ga_path.read_text(encoding="utf-8"))
     lines = ["\n### Measured values (this run)\n\n"]
-    lines.append("| Run | Row entropy (mean) | Corr. on fixed edges | Top-k Jaccard vs \\(A\\) |\n")
+    lines.append("| Run | Row entropy (mean) | Corr. on fixed edges | Top-$k$ overlap / $k$ vs $A$ |\n")
     lines.append("|-----|-------------------|----------------------|-------------------------|\n")
     for run in data.get("runs", []):
         lines.append(

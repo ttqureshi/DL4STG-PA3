@@ -40,9 +40,11 @@ def topk_overlap(learned: np.ndarray, fixed_mask: np.ndarray, k: int) -> Dict[st
         if not l_idx:
             continue
         overlaps.append(len(l_idx & f_idx) / k)
+    mean_overlap = float(np.mean(overlaps)) if overlaps else float("nan")
     return {
         "top_k": k,
-        "mean_topk_jaccard_with_fixed_support": float(np.mean(overlaps)) if overlaps else float("nan"),
+        "mean_topk_overlap_with_fixed_support": mean_overlap,
+        "mean_topk_jaccard_with_fixed_support": mean_overlap,  # legacy key name
     }
 
 

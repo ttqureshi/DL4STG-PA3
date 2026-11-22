@@ -2,7 +2,7 @@
 
 ## Hardware
 
-Windows 11, Intel64 Family 6 Model 154 Stepping 4, GenuineIntel
+12th Gen Intel(R) Core(TM) i5-1235U, 8 GB RAM, CPU-only (`device: cpu` in all YAML configs), Microsoft Windows 11 Enterprise
 
 Runs in this repository default to `device: cpu` in all YAML configs. GPU training is supported by setting `device: cuda` in the config files.
 

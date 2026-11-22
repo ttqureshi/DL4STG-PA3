@@ -60,9 +60,12 @@ def _collect_rows(config_paths: List[Path]) -> List[Dict[str, Any]]:
                 "config": str(path.relative_to(REPO_ROOT)),
                 "model_type": cfg.get("model_type", ""),
                 "adjacency_mode": cfg.get("adjacency_mode", "—"),
+                "val_mae": metrics.get("val_mae"),
+                "val_rmse": metrics.get("val_rmse"),
                 "test_mae": metrics.get("test_mae"),
                 "test_rmse": metrics.get("test_rmse"),
                 "train_seconds": metrics.get("train_seconds"),
+                "epochs": metrics.get("epochs", cfg.get("epochs")),
                 "seed": metrics.get("seed", cfg.get("seed")),
             }
         )
@@ -71,13 +74,17 @@ def _collect_rows(config_paths: List[Path]) -> List[Dict[str, Any]]:
 
 def _markdown_table(rows: List[Dict[str, Any]]) -> str:
     header = (
-        "| Model | Adjacency | Test MAE | Test RMSE | Train time (s) | Seed |\n"
-        "|-------|-----------|----------|-----------|----------------|------|\n"
+        "| Model | Adjacency | Val MAE | Val RMSE | Test MAE | Test RMSE | Train time (s) | Seed |\n"
+        "|-------|-----------|---------|----------|----------|-----------|----------------|------|\n"
     )
     lines = [header]
     for r in sorted(rows, key=lambda x: (x["test_mae"] is None, x["test_mae"] or 0)):
+        vm, vr = r.get("val_mae"), r.get("val_rmse")
+        vmae = f"{vm:.4f}" if vm is not None else "—"
+        vrmse = f"{vr:.4f}" if vr is not None else "—"
         lines.append(
             f"| `{r['run_name']}` | {r['adjacency_mode']} | "
+            f"{vmae} | {vrmse} | "
             f"{r['test_mae']:.4f} | {r['test_rmse']:.4f} | "
             f"{r['train_seconds']:.1f} | {r['seed']} |\n"
         )

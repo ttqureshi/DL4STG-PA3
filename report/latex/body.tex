@@ -44,7 +44,7 @@ Let $(n_-, n_0, n_+)$ be trend counts and $\mathbf{m}$ the aggregated vector.
 
 \begin{itemize}
   \item \textbf{Count steady neighbours:} only \textbf{sum} works ($n_0 = m_2$). Mean and max collide on examples with the same proportions but different $n_0$.
-  \item \textbf{More than half slowing:} only \textbf{sum} works via $n_-=m_1$ and $n_v = m_1+m_2+m_3$. Mean erases the total neighbourhood size; max only records presence of each trend type.
+  \item \textbf{More than half slowing:} \textbf{sum} and \textbf{mean} work ($m_1>0.5$ for mean). \textbf{Max} fails: e.g.\ $(-1,-1,-1,0,0)$ vs.\ $(-1,-1,0,+1,+1)$ both give $(1,1,1)$ but only the first has a slowing majority.
   \item \textbf{Any neighbour slowing:} sum, mean, and max all work (for mean/max, the first coordinate is positive iff $n_->0$).
 \end{itemize}
 
@@ -62,7 +62,7 @@ The symmetric update
   \hat{x}_i(t+1) = a\, x_i(t) + b\,\big(x_{i-1}(t) + x_{i+1}(t)\big)
 \]
 treats left and right neighbours equally.
-For an isolated spike at sensor 20, minimizing squared error on the one-step target yields $a=0$, $b=1$: the layer copies the sum of neighbours, not a one-sided shift.
+For an isolated spike at sensor 20, the true one-step shift puts mass only on sensor 19; SSE $=a^2+(b-1)^2+b^2$ minimizes at $a=0$, $b=\tfrac{1}{2}$: the symmetric layer splits mass to both neighbours and cannot copy a one-sided shift.
 
 On a Gaussian bump rolled for 20 steps, truth translates the peak one sensor per step against traffic with nearly fixed shape.
 The symmetric layer diffuses energy to both sides, smearing the bump (Figure~\ref{fig:q2-heatmaps}).
@@ -105,7 +105,8 @@ Implementation and scripts live in the course repository\footnote{\url{https://g
 
 PeMS flow from 5-minute bins in \texttt{ca\_his\_raw\_2020.h5} and \texttt{ca\_his\_raw\_2021.h5} is resampled to 15-minute steps.
 Following LargeST, we take the \textbf{mean} of the three 5-minute counts in each window and round to integers.
-Missing values after resampling are reported before zero imputation, consistent with LargeST practice.
+Before \texttt{fillna(0)}: 2,542,017 NaN cells (5.06\% of the tensor; all 716 sensors affected). Imputation: zero fill (LargeST).
+Real flow built from Kaggle HDF5 via \texttt{scripts/fetch\_real\_flow\_g.py}; shape $[70176, 716]$.
 Output tensor $X \in \mathbb{R}^{T \times 716}$ is stored with train-split metadata for windowing.
 
 \begin{figure}[t]
@@ -120,7 +121,7 @@ Output tensor $X \in \mathbb{R}^{T \times 716}$ is stored with train-split metad
 We extract the SD submatrix $A_{\mathrm{SD}} = A_{\mathrm{CA}}[I,I]$ from \texttt{ca\_rn\_adj.npy}.
 Off-diagonal $A_{ij} \neq 0$ means sensors $i$ and $j$ are linked on the road network in LargeST (distance-based adjacency), not merely close in space.
 
-On this build: $716$ nodes, mean degree $\approx 24.19$, sparsity $\approx 3.38\%$ (off-diagonal nonzeros), diagonal cleared before statistics.
+On this build: $716$ nodes, \textbf{17,319} directed off-diagonal nonzeros, mean degree $\approx 24.19$, sparsity $\approx 3.38\%$; the SD submatrix is not exactly symmetric (LargeST distances).
 
 \begin{figure}[t]
   \centering
@@ -132,6 +133,8 @@ On this build: $716$ nodes, mean degree $\approx 24.19$, sparsity $\approx 3.38\
 \end{figure}
 
 \subsection{Neighbourhoods}
+
+Example sensor index 0 (ID 1114091): 23 one-hop and 23 two-hop neighbours (\texttt{q3c\_neighborhood\_example.json}).
 
 One-hop neighbours are $\mathcal{N}_1(i) = \{ j : A_{ij} \neq 0 \}$.
 Two-hop nodes are reachable within two edges, excluding $i$ and one-hop nodes.
@@ -208,14 +211,14 @@ Table~\ref{tab:comparison} summarizes results after 20 epochs (seed 42).
   \centering
   \caption{Test metrics on LargeST SD flow (April--December 2021). Lower is better.}
   \label{tab:comparison}
-  \begin{tabular}{llrrrr}
+  \begin{tabular}{llrrrrrr}
     \toprule
-    Model & Adjacency & Test MAE & Test RMSE & Train time (s) & Seed \\
+    Model & Adj. & Val MAE & Val RMSE & Test MAE & Test RMSE & Time (s) & Seed \\
     \midrule
-    temporal\_only & --- & 21.15 & 34.51 & 3163.0 & 42 \\
-    stgnn\_adaptive & adaptive & 26.82 & 45.32 & 3861.8 & 42 \\
-    stgnn\_hybrid & hybrid & 28.16 & 45.19 & 4497.9 & 42 \\
-    stgnn\_fixed & fixed & 60.37 & 94.53 & 3892.2 & 42 \\
+    temporal\_only & --- & 18.96 & 31.84 & 21.15 & 34.51 & 3163 & 42 \\
+    stgnn\_adaptive & adapt. & 22.65 & 41.18 & 26.82 & 45.32 & 3862 & 42 \\
+    stgnn\_hybrid & hybrid & 24.49 & 41.83 & 28.16 & 45.19 & 4498 & 42 \\
+    stgnn\_fixed & fixed & 53.89 & 86.12 & 60.37 & 94.53 & 3892 & 42 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -284,7 +287,7 @@ Table~\ref{tab:graph-analysis} summarizes \texttt{outputs/graph\_analysis.json} 
   \label{tab:graph-analysis}
   \begin{tabular}{lrrr}
     \toprule
-    Run & Row entropy & Corr.\ on $A_{ij}>0$ & Mean top-$k$ Jaccard \\
+    Run & Row entropy & Corr.\ on $A_{ij}>0$ & Top-$k$ overlap / $k$ \\
     \midrule
     stgnn\_adaptive & 2.36 & 0.043 & 0.054 \\
     stgnn\_hybrid & 2.19 & $-0.006$ & 0.033 \\
@@ -293,7 +296,7 @@ Table~\ref{tab:graph-analysis} summarizes \texttt{outputs/graph\_analysis.json} 
 \end{table}
 
 \paragraph{Low overlap with the road graph.}
-Mean top-$k$ Jaccard with one-hop neighbours in $A$ is only $\approx 0.05$ (adaptive) and $\approx 0.03$ (hybrid).
+Mean top-$k$ overlap fraction $|{\mathrm{TopK}_i\cap\mathcal{N}(i)}|/k$ is only $\approx 0.05$ (adaptive) and $\approx 0.03$ (hybrid)---not Jaccard.
 For most nodes, the strongest learned edges point \emph{off} the physical adjacency---parallel corridors, distant sensors with correlated patterns, or other statistical shortcuts.
 Correlation on pairs where $A_{ij}>0$ is near zero, so even when an edge exists on the map, its learned weight barely tracks the fixed distance weight.
 
@@ -301,6 +304,11 @@ Row entropy $\approx 2.2$--$2.4$ indicates messages spread across many receivers
 Together with Q6, the picture is clear: the learner \textbf{diverges from $\hat{A}$} and still \textbf{underperforms temporal-only}.
 Useful spatial coupling for this task is either already implicit in per-sensor temporal features or not well captured by one shallow GCN step with the adjacencies we tried.
 Fixed $\hat{A}$ is the worst choice because it locks in that mismatch; adaptive learning partially repairs it but cannot beat ignoring the graph altogether on this benchmark.
+
+\paragraph{Critical discussion.}
+(1) Low forecasting error on an adaptive matrix does \emph{not} mean it rediscovered the road map---predictive edges need not be physical.
+(2) Hybrid did \emph{not} outperform adaptive here; the road prior hurt more than it helped.
+(3) A static $A$ cannot track rush hours, incidents, or weekend patterns.
 
 \subsection{Pipeline summary}
 

@@ -110,12 +110,14 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.perf_counter()
     best_val, best_path = float("inf"), out_dir / "best_model.pt"
+    best_val_metrics: Dict[str, Any] = {}
     for epoch in range(1, int(cfg.get("epochs", 20)) + 1):
         tr = train_one_epoch(model, loaders["train"], optimizer, loss_fn, device)
         val = evaluate(model, loaders["val"], dm.stats, loss_fn, device)
         print(f"epoch {epoch:03d} | train={tr:.4f} val MAE={val['mae']:.4f} RMSE={val['rmse']:.4f}")
         if val["loss"] < best_val:
             best_val = val["loss"]
+            best_val_metrics = dict(val)
             torch.save(
                 {
                     "model_state": model.state_dict(),
@@ -129,9 +131,12 @@ def main() -> None:
     model.load_state_dict(ckpt["model_state"])
     test = evaluate(model, loaders["test"], dm.stats, loss_fn, device)
     results = {
+        "val_mae": best_val_metrics.get("mae"),
+        "val_rmse": best_val_metrics.get("rmse"),
         "test_mae": test["mae"],
         "test_rmse": test["rmse"],
         "train_seconds": train_time,
+        "epochs": int(cfg.get("epochs", 20)),
         "seed": int(cfg.get("seed", 42)),
     }
     (out_dir / "results.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
