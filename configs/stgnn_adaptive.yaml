@@ -11,6 +11,6 @@ hidden_dim: 32
 embed_dim: 10
 top_k: 20
 batch_size: 32
-epochs: 5
+epochs: 20
 lr: 0.001
 loss: mae

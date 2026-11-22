@@ -75,10 +75,11 @@ python -m src.analyze_graph --config configs/stgnn_adaptive.yaml --also-hybrid
 
 ```bash
 python -m src.q1_q2.run_all    # Q1–Q2 artifacts if needed
-python report/build_report.py
+python report/build_report.py   # optional Markdown merge
+python scripts/post_train_report.py   # after training: tables, Q6/Q7 figures, patch sections
 ```
 
-Edit the GitHub URL placeholder at the top of `report/report.md` before export.
+**PDF (NeurIPS LaTeX):** `report/latex/compile.ps1` → `report/latex/DL4STG_PA3.pdf` and `report/DL4STG_PA3.pdf`.
 
 ## Q1–Q2 only
 

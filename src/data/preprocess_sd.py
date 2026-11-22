@@ -5,12 +5,12 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from src.data.paths import (
-    CA_META,
     DATA_PROCESSED,
     RESAMPLE_RULE,
     SD_DISTRICT,
@@ -19,6 +19,9 @@ from src.data.paths import (
     ensure_dirs,
     raw_h5_path,
 )
+
+H5_KEY = "t"
+H5_ROW_CHUNK = 400
 
 
 @dataclass
@@ -32,6 +35,8 @@ class MissingValueReport:
 
 
 def load_sd_metadata() -> pd.DataFrame:
+    from src.data.paths import CA_META
+
     ca_meta = pd.read_csv(CA_META)
     sd_meta = ca_meta[ca_meta["District"] == SD_DISTRICT].copy()
     sd_meta = sd_meta.reset_index(drop=True)
@@ -43,13 +48,6 @@ def load_sd_metadata() -> pd.DataFrame:
 
 
 def resample_policy() -> tuple[str, str]:
-    """
-    PeMS 'flow' in LargeST is vehicles observed per 5-minute interval (count).
-
-    Assignment: use mean for average flow rates, sum for interval counts.
-    LargeST official notebook uses mean; we follow LargeST for benchmark alignment
-    and document that summation would preserve total vehicles per 15-min window.
-    """
     agg = "mean"
     rationale = (
         "5-min values are interval vehicle counts. Official LargeST uses "
@@ -69,24 +67,61 @@ def missing_report(before_fill: pd.DataFrame) -> MissingValueReport:
     )
 
 
-def build_flow_tensor(sd_meta: pd.DataFrame) -> tuple[pd.DataFrame, MissingValueReport]:
+def _read_sd_h5_chunked(path: Path, sd_sensor_ids: list[str]) -> pd.DataFrame:
+    """LargeST HDF5 is fixed-format; slice rows to keep RAM under ~200 MB per chunk."""
+    parts: list[pd.DataFrame] = []
+    with pd.HDFStore(path, mode="r") as store:
+        storer = store.get_storer(H5_KEY)
+        nrows = int(storer.nrows) if storer.nrows is not None else int(storer.shape[0])
+        for start in range(0, nrows, H5_ROW_CHUNK):
+            stop = min(start + H5_ROW_CHUNK, nrows)
+            chunk = store.select(H5_KEY, start=start, stop=stop)
+            chunk.columns = chunk.columns.astype(str)
+            parts.append(chunk[sd_sensor_ids])
+    return pd.concat(parts, axis=0).sort_index()
+
+
+def _process_year_h5(sd_meta: pd.DataFrame, year: int) -> tuple[pd.DataFrame, MissingValueReport]:
     sd_sensor_ids = sd_meta["ID"].astype(str).tolist()
+    subset = _read_sd_h5_chunked(raw_h5_path(year), sd_sensor_ids)
+    agg, _ = resample_policy()
+    resampled = subset.resample(RESAMPLE_RULE).agg(agg)
+    report = missing_report(resampled)
+    resampled = resampled.fillna(0).round(0)
+    return resampled, report
+
+
+def build_flow_tensor(sd_meta: pd.DataFrame) -> tuple[pd.DataFrame, MissingValueReport]:
     frames = []
     reports = []
     for year in YEARS:
-        path = raw_h5_path(year)
-        raw = pd.read_hdf(path)
-        raw.columns = raw.columns.astype(str)
-        subset = raw[sd_sensor_ids].sort_index()
-        agg, _ = resample_policy()
-        resampled = subset.resample(RESAMPLE_RULE).agg(agg)
-        reports.append(missing_report(resampled))
-        resampled = resampled.fillna(0).round(0)
+        resampled, report = _process_year_h5(sd_meta, year)
         frames.append(resampled)
+        reports.append(report)
 
     combined = pd.concat(frames, axis=0).sort_index()
     combined = combined[~combined.index.duplicated(keep="first")]
+    merged_report = MissingValueReport(
+        sensors_with_any_nan=max(r.sensors_with_any_nan for r in reports),
+        total_nan_cells=sum(r.total_nan_cells for r in reports),
+        nan_fraction=float(np.mean([r.nan_fraction for r in reports])),
+        imputation=reports[0].imputation,
+    )
+    return combined, merged_report
 
+
+def build_flow_tensor_low_disk(
+    sd_meta: pd.DataFrame, delete_h5_after_year: bool = True
+) -> tuple[pd.DataFrame, MissingValueReport]:
+    frames, reports = [], []
+    for year in YEARS:
+        resampled, report = _process_year_h5(sd_meta, year)
+        frames.append(resampled)
+        reports.append(report)
+        if delete_h5_after_year:
+            raw_h5_path(year).unlink(missing_ok=True)
+    combined = pd.concat(frames, axis=0).sort_index()
+    combined = combined[~combined.index.duplicated(keep="first")]
     merged_report = MissingValueReport(
         sensors_with_any_nan=max(r.sensors_with_any_nan for r in reports),
         total_nan_cells=sum(r.total_nan_cells for r in reports),
@@ -98,9 +133,7 @@ def build_flow_tensor(sd_meta: pd.DataFrame) -> tuple[pd.DataFrame, MissingValue
 
 def save_processed(sd_meta: pd.DataFrame, flow: pd.DataFrame, report: MissingValueReport) -> dict:
     ensure_dirs()
-    sd_meta_path = DATA_PROCESSED / "sd_meta.csv"
-    sd_meta.to_csv(sd_meta_path, index=False)
-
+    sd_meta.to_csv(DATA_PROCESSED / "sd_meta.csv", index=False)
     flow_values = flow.values.astype(np.float32)
     np.save(DATA_PROCESSED / "sd_flow_2020_2021_15min.npy", flow_values)
     np.save(DATA_PROCESSED / "flow_15min.npy", flow_values)
@@ -137,7 +170,10 @@ def save_processed(sd_meta: pd.DataFrame, flow: pd.DataFrame, report: MissingVal
     return meta
 
 
-def run_preprocessing() -> dict:
+def run_preprocessing(low_disk: bool = False) -> dict:
     sd_meta = load_sd_metadata()
-    flow, report = build_flow_tensor(sd_meta)
+    if low_disk:
+        flow, report = build_flow_tensor_low_disk(sd_meta)
+    else:
+        flow, report = build_flow_tensor(sd_meta)
     return save_processed(sd_meta, flow, report)

@@ -294,7 +294,7 @@ cd src/q1_q2 && python run_all.py
 
 Reference: [LargeST](https://github.com/liuxu77/LargeST) (NeurIPS 2023 DB Track). San Diego (SD) is **District 11** in `ca_meta.csv` (**716** sensors). Sensor order follows `sd_meta.csv` / `ID2` indexing into the CA adjacency matrix.
 
-**Data note (this run):** `ca_meta.csv` and the SD road-network adjacency (\(716\times716\)) come from LargeST. Each uncompressed `ca_his_raw_*.h5` is \(\approx 7.2\,\mathrm{GiB}\); local **C:**/**Google Drive** free space was below that, so flow was produced with `python -m src.data.run_q3 --synthetic-flow` (daily/weekly traffic patterns, real sensor IDs and graph). Re-run without `--synthetic-flow` after placing valid HDF5 files in `data/raw/`. See `data/processed/synthetic_note.json`.
+**Data note:** Flow was built from LargeST `ca_his_raw_2020.h5` and `ca_his_raw_2021.h5` via `scripts/fetch_real_flow_g.py` (one HDF5 at a time, chunked reads for RAM; intermediates on C: then copied to `data/processed/`). Metadata and \(A_{\mathrm{SD}}\) are from Kaggle LargeST.
 
 ---
 
@@ -575,15 +575,20 @@ python -m src.evaluate_all
 
 Each training run writes `results.json` with `test_mae`, `test_rmse`, `train_seconds`, and `seed`. The aggregator sorts rows by test MAE and prints a Markdown table suitable for pasting here.
 
-### Expected comparisons (fill from your run)
+### Results (LargeST SD flow, 20 epochs, seed 42)
 
 | Model | Adjacency | Test MAE | Test RMSE | Train time (s) | Seed |
 |-------|-----------|----------|-----------|----------------|------|
-| `stgnn_adaptive` | adaptive | 4.1011 | 5.1350 | 1763.4 | 42 |
-| `stgnn_hybrid` | hybrid | 4.5876 | 5.8014 | 831.5 | 42 |
-| `temporal_only` | — | 5.3083 | 6.6770 | 1247.3 | 42 |
-| `stgnn_fixed` | fixed | 8.2537 | 10.8794 | 1501.9 | 42 |
+| `temporal_only` | — | 21.1456 | 34.5076 | 3163.0 | 42 |
+| `stgnn_adaptive` | adaptive | 26.8164 | 45.3206 | 3861.8 | 42 |
+| `stgnn_hybrid` | hybrid | 28.1551 | 45.1923 | 4497.9 | 42 |
+| `stgnn_fixed` | fixed | 60.3661 | 94.5324 | 3892.2 | 42 |
 
+
+
+
+
+**Summary:** Best test MAE is `temporal_only` (21.1456). No graph model beats `temporal_only` on this split.
 
 **Interpretation prompts**
 
@@ -652,6 +657,14 @@ This section interprets **what** the adaptive and hybrid models learn in the mes
 Hybrid models (`stgnn_hybrid`) save the adaptive component separately when present; analysis can be run with `--also-hybrid`.
 
 ---
+
+
+### Measured values (this run)
+
+| Run | Row entropy (mean) | Corr. on fixed edges | Top-k Jaccard vs \(A\) |
+|-----|-------------------|----------------------|-------------------------|
+| `stgnn_adaptive` | 2.360 | 0.0428 | 0.0538 |
+| `stgnn_hybrid` | 2.188 | -0.0062 | 0.0334 |
 
 ## Q7(b) — Quantitative alignment with \(A\)
 

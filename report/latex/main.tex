@@ -1,0 +1,44 @@
+\documentclass{article}
+
+\usepackage[final]{neurips_2024}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+
+\graphicspath{{../figures/}}
+
+\title{DL4STG Programming Assignment 3:\\Spatio-Temporal Graph Learning on LargeST San Diego}
+
+\author{%
+  Taimur Qureshi\\
+  \texttt{https://github.com/ttqureshi/DL4STG-PA3}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We study sensor-level traffic flow forecasting on the LargeST San Diego road graph ($716$ sensors, $15$-minute bins, $2020$--$2021$).
+Starting from course message-passing notation, we build an ST-GNN with fixed, adaptive, and hybrid adjacency and compare it to a temporal-only baseline.
+On real PeMS flow, the temporal baseline attains the lowest test MAE ($21.15$); among graph models, adaptive adjacency works best ($26.82$), while a fixed road graph alone is weakest ($60.37$).
+Learned message matrices align only loosely with the physical adjacency, which helps explain why na\"ive graph convolutions can hurt when the road topology mismatches traffic coupling.
+\end{abstract}
+
+\input{body.tex}
+
+\section*{Reproducibility}
+Code and configs: \url{https://github.com/ttqureshi/DL4STG-PA3}.
+Run \texttt{python -m src.evaluate\_all} and \texttt{python scripts/post\_train\_report.py} after placing processed flow under \texttt{data/processed/}.
+Details: \texttt{scripts/REPRODUCE.md}.
+
+\end{document}

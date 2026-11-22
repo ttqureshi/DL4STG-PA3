@@ -24,6 +24,11 @@ def main() -> int:
         action="store_true",
         help="Use synthetic flow (real SD meta/adjacency) when HDF5 is unavailable",
     )
+    parser.add_argument(
+        "--low-disk",
+        action="store_true",
+        help="Process each year HDF5 then delete it (need only one ca_his_raw_*.h5 on disk at a time)",
+    )
     args = parser.parse_args()
     ensure_dirs()
 
@@ -40,7 +45,7 @@ def main() -> int:
     if args.synthetic_flow:
         meta = run_synthetic_preprocessing()
     else:
-        meta = run_preprocessing()
+        meta = run_preprocessing(low_disk=args.low_disk)
     print(f"  Saved flow tensor shape: {meta['flow_shape']}")
 
     print("Building adjacency submatrix...")

@@ -4,7 +4,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_RAW = Path(os.environ.get("DL4STG_RAW_DIR", REPO_ROOT / "data" / "raw"))
-DATA_PROCESSED = REPO_ROOT / "data" / "processed"
+DATA_PROCESSED = Path(os.environ.get("DL4STG_PROCESSED_DIR", REPO_ROOT / "data" / "processed"))
 FIGURES_DIR = REPO_ROOT / "report" / "figures" / "q3"
 REPORT_SECTION = REPO_ROOT / "report" / "sections" / "q3.md"
 

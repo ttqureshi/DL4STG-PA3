@@ -30,3 +30,11 @@ outputs/
 
 # Checkpoints
 *.pt
+
+# LaTeX build junk
+report/latex/*.aux
+report/latex/*.log
+report/latex/*.out
+report/latex/*.synctex.gz
+report/latex/*.fls
+report/latex/*.fdb_latexmk
