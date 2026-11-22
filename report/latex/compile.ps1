@@ -1,13 +1,16 @@
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$pdf = Join-Path $here "DL4STG_PA3.pdf"
+$repoReport = Split-Path -Parent $here
+$submitName = "25280024_DL4STG_PA3.pdf"
 $pdflatex = "C:\Users\PMLS\AppData\Local\Programs\MiKTeX\miktex\bin\x64\pdflatex.exe"
 Push-Location $here
 try {
     & $pdflatex -interaction=nonstopmode -halt-on-error main.tex
     & $pdflatex -interaction=nonstopmode -halt-on-error main.tex
-    Copy-Item -Force (Join-Path $here "main.pdf") $pdf
-    Write-Host "Wrote $pdf"
+    $built = Join-Path $here "main.pdf"
+    Copy-Item -Force $built (Join-Path $here $submitName)
+    Copy-Item -Force $built (Join-Path $repoReport $submitName)
+    Write-Host "Wrote $here\$submitName and $repoReport\$submitName"
 } finally {
     Pop-Location
 }

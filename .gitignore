@@ -25,6 +25,9 @@ Thumbs.db
 # Assignment PDFs should not be committed
 *.pdf
 
+# Local submission checklist (not for GitHub)
+SUBMISSION_REVIEW.md
+
 # Training outputs (regenerable)
 outputs/
 

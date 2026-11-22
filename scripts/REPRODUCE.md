@@ -79,7 +79,7 @@ python report/build_report.py   # optional Markdown merge
 python scripts/post_train_report.py   # after training: tables, Q6/Q7 figures, patch sections
 ```
 
-**PDF (NeurIPS LaTeX):** `report/latex/compile.ps1` → `report/latex/DL4STG_PA3.pdf` and `report/DL4STG_PA3.pdf`.
+**PDF (NeurIPS LaTeX):** `report/latex/compile.ps1` → `report/25280024_DL4STG_PA3.pdf` (LMS submission).
 
 ## Q1–Q2 only
 
