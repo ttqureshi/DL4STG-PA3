@@ -66,4 +66,4 @@ report/sections/   # q1.md … q7.md → report/report.md
 scripts/           # REPRODUCE.md
 ```
 
-PDF handouts are gitignored; keep them locally only.
+**LMS report (PDF):** [`report/25280024_DL4STG_PA3.pdf`](report/25280024_DL4STG_PA3.pdf) — rebuild with `report/latex/compile.ps1`.

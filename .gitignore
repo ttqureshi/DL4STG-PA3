@@ -22,8 +22,9 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Assignment PDFs should not be committed
+# Other PDFs stay local; LMS report is tracked for GitHub
 *.pdf
+!report/25280024_DL4STG_PA3.pdf
 
 # Local submission checklist (not for GitHub)
 SUBMISSION_REVIEW.md
